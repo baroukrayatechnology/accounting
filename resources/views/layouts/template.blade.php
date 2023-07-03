@@ -6,7 +6,7 @@
 <meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
 
 <head>
-    <title>Accounting | Administrator</title>
+    <title>Accounting</title>
 
 
     <!--[if lt IE 10]>
