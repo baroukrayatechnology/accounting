@@ -51,140 +51,143 @@
                 @endphp
                 <?php
                     foreach ($kodeAkun as $item) {
-
-                        $mutasiAwalDebet = 0;
-                        $mutasiAwalKredit = 0;
-                        
-                        $mutasiDebet = 0;
-                        $mutasiKredit = 0;
-
-                        // cek apakah ada jurnal awal di field kode
-                        $cekTransaksiAwalDiKode = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('kode', $item->kode_akun)->count();
-
-                        if ($cekTransaksiAwalDiKode > 0) {
-                            $sumMutasiAwalDebetDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
+                        if ($item->nama != "Laba (Rugi) Tahun Berjalan") {
+                            $mutasiAwalDebet = 0;
+                            $mutasiAwalKredit = 0;
                             
-                            $sumMutasiAwalKreditDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                            $mutasiDebet = 0;
+                            $mutasiKredit = 0;
 
-                            if ($item->kodeInduk->tipe == 'Debit') {
-                                $mutasiAwalDebet += $sumMutasiAwalDebetDiKode;
-                                $mutasiAwalKredit += $sumMutasiAwalKreditDiKode;
-                            }
-                            else{
-                                $mutasiAwalDebet += $sumMutasiAwalDebetDiKode;
-                                $mutasiAwalKredit += $sumMutasiAwalKreditDiKode;
-                            }
+                            // cek apakah ada jurnal awal di field kode
+                            $cekTransaksiAwalDiKode = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('kode', $item->kode_akun)->count();
 
-                            // cek apakah transaksi sebelumnya juga terdapat di field lawan
-                            $cekTransaksiAwalDiLawan = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('lawan', $item->kode_akun)->count();
-                            if ($cekTransaksiAwalDiLawan > 0) {
-                                $sumMutasiAwalDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
-                            
-                                $sumMutasiAwalKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
+                            if ($cekTransaksiAwalDiKode > 0) {
+                                $sumMutasiAwalDebetDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
+                                
+                                $sumMutasiAwalKreditDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
 
-                                $mutasiAwalDebet += $sumMutasiAwalDebetDiLawan;
-                                $mutasiAwalKredit += $sumMutasiAwalKreditDiLawan;
-                            }
-                        }
-                        else{ // cek apakah ada jurnal awal di field lawan
-                            $cekTransaksiAwalDiLawan = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('lawan', $item->kode_akun)->count();
-                            if ($cekTransaksiAwalDiLawan > 0) {
-                                $sumMutasiAwalDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
-                            
-                                $sumMutasiAwalKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
-
-                                if ($item->kodeInduk->tipe == 'Debit') {
-                                    $mutasiAwalDebet += $sumMutasiAwalDebetDiLawan;
-
-                                    $mutasiAwalKredit += $sumMutasiAwalKreditDiLawan;
+                                if ($item->tipe == 'Debit') {
+                                    $mutasiAwalDebet += $sumMutasiAwalDebetDiKode + $item->saldo_awal;
+                                    $mutasiAwalKredit += $sumMutasiAwalKreditDiKode;
                                 }
                                 else{
+                                    $mutasiAwalDebet += $sumMutasiAwalDebetDiKode;
+                                    $mutasiAwalKredit += $sumMutasiAwalKreditDiKode + $item->saldo_awal;
+                                }
+
+                                // cek apakah transaksi sebelumnya juga terdapat di field lawan
+                                $cekTransaksiAwalDiLawan = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('lawan', $item->kode_akun)->count();
+                                if ($cekTransaksiAwalDiLawan > 0) {
+                                    $sumMutasiAwalDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                                
+                                    $sumMutasiAwalKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
+
                                     $mutasiAwalDebet += $sumMutasiAwalDebetDiLawan;
                                     $mutasiAwalKredit += $sumMutasiAwalKreditDiLawan;
                                 }
                             }
-                            else{ //tidak ada jurnal awal di field kode maupun lawan
-                                // if ($item->kodeInduk->tipe == 'Debit') {
-                                //     $mutasiAwalDebet += $item->saldo_awal;
-                                // }
-                                // else{
-                                //     $mutasiAwalKredit += $item->saldo_awal;
-                                // }
-                            }
-                        }
+                            else{ // cek apakah ada jurnal awal di field lawan
+                                $cekTransaksiAwalDiLawan = \App\Models\Jurnal::where('tanggal', '<', $dari)->where('lawan', $item->kode_akun)->count();
+                                if ($cekTransaksiAwalDiLawan > 0) {
+                                    $sumMutasiAwalDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                                
+                                    $sumMutasiAwalKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->where('tanggal', '<', $dari)->where('tipe', 'Debit')->sum('jurnal.nominal');
 
-                        // cek transaksi di field kode
-                        $cekTransaksiDiKode = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('kode', $item->kode_akun)->count();
-                        
-                        if ($cekTransaksiDiKode > 0) {
-                            $sumMutasiDebetDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
+                                    if ($item->tipe == 'Debit') {
+                                        $mutasiAwalDebet += $sumMutasiAwalDebetDiLawan + $item->saldo_awal;
+
+                                        $mutasiAwalKredit += $sumMutasiAwalKreditDiLawan;
+                                    }
+                                    else{
+                                        $mutasiAwalDebet += $sumMutasiAwalDebetDiLawan;
+                                        $mutasiAwalKredit += $sumMutasiAwalKreditDiLawan + $item->saldo_awal;
+                                    }
+                                }
+                                else{ //tidak ada jurnal awal di field kode maupun lawan
+                                    if ($item->tipe == 'Debit') {
+                                        $mutasiAwalDebet += $item->saldo_awal;
+                                    }
+                                    else{
+                                        $mutasiAwalKredit += $item->saldo_awal;
+                                    }
+                                }
+                            }
+
+                            // cek transaksi di field kode
+                            $cekTransaksiDiKode = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('kode', $item->kode_akun)->count();
                             
-                            $sumMutasiKreditDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
-
-                            $mutasiDebet += $sumMutasiDebetDiKode;
-                            $mutasiKredit += $sumMutasiKreditDiKode;
-
-                            // cek transaksi di field lawan
-                            $cekTransaksiDiLawan = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('lawan', $item->kode_akun)->count();
-
-                            if ($cekTransaksiDiLawan > 0) {
-                                $sumMutasiDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                            if ($cekTransaksiDiKode > 0) {
+                                $sumMutasiDebetDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
                                 
-                                $sumMutasiKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
+                                $sumMutasiKreditDiKode = \DB::table('jurnal')->where('kode', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
 
-                                $mutasiDebet += $sumMutasiDebetDiLawan;
-                                $mutasiKredit += $sumMutasiKreditDiLawan;
+                                $mutasiDebet += $sumMutasiDebetDiKode;
+                                $mutasiKredit += $sumMutasiKreditDiKode;
+
+                                // cek transaksi di field lawan
+                                $cekTransaksiDiLawan = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('lawan', $item->kode_akun)->count();
+
+                                if ($cekTransaksiDiLawan > 0) {
+                                    $sumMutasiDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                                    
+                                    $sumMutasiKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
+
+                                    $mutasiDebet += $sumMutasiDebetDiLawan;
+                                    $mutasiKredit += $sumMutasiKreditDiLawan;
+                                }
                             }
-                        }
-                        else{ // cek transaksi di field lawan
-                            // cek transaksi di field lawan
-                            $cekTransaksiDiLawan = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('lawan', $item->kode_akun)->count();
-                            if ($cekTransaksiDiLawan > 0) {
-                                $sumMutasiDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
-                                
-                                $sumMutasiKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
+                            else{ // cek transaksi di field lawan
+                                // cek transaksi di field lawan
+                                $cekTransaksiDiLawan = \App\Models\Jurnal::whereBetween('tanggal', [$dari, $sampai])->where('lawan', $item->kode_akun)->count();
+                                if ($cekTransaksiDiLawan > 0) {
+                                    $sumMutasiDebetDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Kredit')->sum('jurnal.nominal');
+                                    
+                                    $sumMutasiKreditDiLawan = \DB::table('jurnal')->where('lawan', $item->kode_akun)->whereBetween('tanggal', [$dari, $sampai])->where('tipe', 'Debit')->sum('jurnal.nominal');
 
-                                $mutasiDebet += $sumMutasiDebetDiLawan;
-                                $mutasiKredit += $sumMutasiKreditDiLawan;
+                                    $mutasiDebet += $sumMutasiDebetDiLawan;
+                                    $mutasiKredit += $sumMutasiKreditDiLawan;
+                                }
                             }
-                        }
 
-                        $saldoAwal = $mutasiAwalDebet - $mutasiAwalKredit;
+                            $saldoAwal = $mutasiAwalDebet - $mutasiAwalKredit;
 
-                        $saldoAkhir = ($mutasiAwalDebet + $mutasiDebet) - ($mutasiAwalKredit + $mutasiKredit);
-                        
-                        $totalMutasiDebet += $mutasiDebet;
-                        $totalMutasiKredit += $mutasiKredit;
+                            $saldoAkhir = ($mutasiAwalDebet + $mutasiDebet) - ($mutasiAwalKredit + $mutasiKredit);
+                            
+                            $totalMutasiDebet += $mutasiDebet;
+                            $totalMutasiKredit += $mutasiKredit;
 
-                        if ($item->kodeInduk->tipe == 'Debit') {
-                            $totalSaldoAwalDebet += $saldoAwal;
-                            $totalSaldoAkhirDebet += $saldoAkhir;
-                        }
-                        else{
-                            $totalSaldoAwalKredit += $saldoAwal;
-                            $totalSaldoAkhirKredit += $saldoAkhir;
+                            if ($item->tipe == 'Debit') {
+                                $totalSaldoAwalDebet += $saldoAwal;
+                                $totalSaldoAkhirDebet += $saldoAkhir;
+                            }
+                            else{
+                                $totalSaldoAwalKredit += $saldoAwal;
+                                $totalSaldoAkhirKredit += $saldoAkhir;
+                            }
                         }
                 ?>
-                <tr>
-                    <td>{{ $item->kode_akun }}</td>
-                    <td>{{ $item->nama }}</td>
-                    @if ($item->kodeInduk->tipe == 'Debit')
-                        <td>{{ number_format($saldoAwal, 2, ',', '.') }}</td>
-                        <td>-</td>
-                    @else
-                        <td>-</td>
-                        <td>{{ number_format($saldoAwal * -1, 2, ',', '.') }}</td>
-                    @endif
-                    <td>{{ number_format($mutasiDebet, 2, ',', '.') }}</td>
-                    <td>{{ number_format($mutasiKredit, 2, ',', '.') }}</td>
-                    @if ($item->kodeInduk->tipe == 'Debit')
-                        <td>{{ number_format($saldoAkhir, 2, ',', '.') }}</td>
-                        <td>-</td>
-                    @else
-                        <td>-</td>
-                        <td>{{ number_format($saldoAkhir * -1, 2, ',', '.') }}</td>
-                    @endif
-                </tr>
+                @if ($item->nama != "Laba (Rugi) Tahun Berjalan")    
+                    <tr>
+                        <td>{{ $item->kode_akun }}</td>
+                        <td>{{ $item->nama }}</td>
+                        @if ($item->tipe == 'Debit')
+                            <td>{{ number_format($saldoAwal, 2, ',', '.') }}</td>
+                            <td>-</td>
+                        @else
+                            <td>-</td>
+                            <td>{{ number_format($saldoAwal * -1, 2, ',', '.') }}</td>
+                        @endif
+                        <td>{{ number_format($mutasiDebet, 2, ',', '.') }}</td>
+                        <td>{{ number_format($mutasiKredit, 2, ',', '.') }}</td>
+                        @if ($item->tipe == 'Debit')
+                            <td>{{ number_format($saldoAkhir, 2, ',', '.') }}</td>
+                            <td>-</td>
+                        @else
+                            <td>-</td>
+                            <td>{{ number_format($saldoAkhir * -1, 2, ',', '.') }}</td>
+                        @endif
+                    </tr>
+                @endif
                 <?php
                 // endforeach
                     }

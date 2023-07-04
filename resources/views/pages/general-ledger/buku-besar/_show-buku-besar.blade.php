@@ -112,7 +112,7 @@
                             }
 
                             // hitung saldoAwal dari rekening
-                            if ($item->kodeInduk->tipe == 'Debit') {
+                            if ($item->tipe == 'Debit') {
                                 $saldoAkhir = ($saldoAwalDebit + $saldoAwalDebit2) - ($saldoAwalKredit + $saldoAwalKredit2);
                             } else {
                                 $saldoAkhir = ($saldoAwalDebit + $saldoAwalDebit2) + ($saldoAwalKredit + $saldoAwalKredit2);
@@ -172,7 +172,7 @@
                                     @endphp
 
                                     {{-- jika tipe rekening = debet --}}
-                                    @if ($item->kodeInduk->tipe == 'Debit')
+                                    @if ($item->tipe == 'Debit')
                                         {{-- saldo akhir rekening bertambah --}}
                                         @php
                                             $saldoAkhir += $val->nominal;
@@ -198,7 +198,7 @@
                                     @endphp
 
                                     {{-- jika tipe rekening = debet --}}
-                                    @if ($item->kodeInduk->tipe == 'Debit')
+                                    @if ($item->tipe == 'Debit')
                                         {{-- saldo akhir berkurang --}}
                                         @php
                                             $saldoAkhir -= $val->nominal;
@@ -227,7 +227,7 @@
                                     @endphp
 
                                     {{-- jika tipe rekening = Debit --}}
-                                    @if ($item->kodeInduk->tipe == 'Debit')
+                                    @if ($item->tipe == 'Debit')
                                         {{-- saldo akhir berkurang --}}
                                         @php
                                             $saldoAkhir -= $val->nominal;
@@ -252,7 +252,7 @@
                                     @endphp
 
                                     {{-- jika tipe rekening = Debit --}}
-                                    @if ($item->kodeInduk->tipe == 'Debit')
+                                    @if ($item->tipe == 'Debit')
                                         {{-- saldo akhir bertambah --}}
                                         @php
                                             $saldoAkhir += $val->nominal;

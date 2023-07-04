@@ -3,9 +3,10 @@
         <thead>
             <tr class="table-primary">
                 <th class="text-center">#</th>
+                <th>Kode Induk</th>
                 <th>Kode Rekening</th>
                 <th>Nama</th>
-                <th>Kode Induk</th>
+                <th>Saldo Awal</th>
                 <th>Tipe</th>
                 <th>Aksi</th>
             </tr>
@@ -18,9 +19,10 @@
             @foreach ($kode_akun as $item)
                 <tr class="border-bottom-primary">
                     <td class="text-center text-muted">{{ $no }}</td>
+                    <td>{{ $item->kodeInduk->kode_induk . ' - ' . $item->kodeInduk->nama }}</td>
                     <td>{{ $item->kode_akun }}</td>
                     <td>{{ $item->nama }}</td>
-                    <td>{{ $item->kodeInduk->kode_induk . ' - ' . $item->kodeInduk->nama }}</td>
+                    <td>{{ number_format($item->saldo_awal, 2, ',', '.') }}</td>
                     <td>{{ $item->tipe }}</td>
                     {{-- <td>Rp. {{number_format($item->saldo_awal, 2, ',', '.') }}</td> --}}
                     <td>

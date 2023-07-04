@@ -243,7 +243,7 @@
                                 $mutasiKredit += $sumMutasiKreditDiLawan;
                             }
                         }
-                        if ($item->kodeInduk->tipe == 'Debit') {
+                        if ($item->tipe == 'Debit') {
                             $beban = $mutasiDebet - $mutasiKredit;
                             $totalBeban += $beban;
                         } else {
@@ -256,7 +256,7 @@
                             {{ $item->nama }}
                         </td>
                         <td>
-                            {{ $item->kodeInduk->tipe == 'Debit' ? number_format($beban, 2, ',', '.') : '(' . number_format($beban, 2, ',', '.') . ')' }}
+                            {{ $item->tipe == 'Debit' ? number_format($beban, 2, ',', '.') : '(' . number_format($beban, 2, ',', '.') . ')' }}
                         </td>
                     </tr>
                 @endforeach
@@ -366,7 +366,7 @@
                                 $mutasiKredit += $sumMutasiKreditDiLawan;
                             }
                         }
-                        if ($item->kodeInduk->tipe == 'Debit') {
+                        if ($item->tipe == 'Debit') {
                             $pajak = $mutasiDebet - $mutasiKredit;
                             $totalPajak += $pajak;
                         } else {
@@ -379,7 +379,7 @@
                             {{ $item->nama }}
                         </td>
                         <td>
-                            {{ $item->kodeInduk->tipe == 'Debit' ? number_format($pajak, 2, ',', '.') : '(' . number_format($pajak, 2, ',', '.') . ')' }}
+                            {{ $item->tipe == 'Debit' ? number_format($pajak, 2, ',', '.') : '(' . number_format($pajak, 2, ',', '.') . ')' }}
                         </td>
                     </tr>
                 @endforeach

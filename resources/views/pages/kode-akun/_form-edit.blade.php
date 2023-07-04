@@ -45,6 +45,19 @@
     </div>
 
     <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Saldo Awal</label>
+        <div class="col-sm-10">
+            <input type="text" name="saldo_awal" class="form-control @error('saldo_awal') is-invalid @enderror"
+                placeholder="Saldo Awal" value="{{ old('nama',$data->saldo_awal) }}">
+            @error('saldo_awal')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+            @enderror
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="col-sm-2 col-form-label">Tipe</label>
         <div class="col-sm-10">
             <select name="tipe" id="tipe" class="form-control @error('tipe') is-invalid @enderror">

@@ -94,6 +94,7 @@ class KodeAkunController extends Controller
             $addData->induk_kode = $request->induk_kode;
             $addData->tipe = $request->tipe;
             $addData->nama = str_replace('-',' ',$request->nama);
+            $addData->saldo_awal = $request->saldo_awal;
             $addData->save();
             return redirect()->route('kode-akun.index')->withStatus('Berhasil menambahkan data.');
         } catch (QueryException $e) {
@@ -169,6 +170,7 @@ class KodeAkunController extends Controller
             $updateData->induk_kode = $request->induk_kode;
             $updateData->tipe = $request->tipe;
             $updateData->nama = str_replace('-',' ',$request->nama);
+            $updateData->saldo_awal = $request->saldo_awal;
             $updateData->save();
             return redirect()->route('kode-akun.index')->withStatus('Berhasil menambahkan data.');
         } catch (QueryException $e) {
