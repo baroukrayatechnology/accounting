@@ -22,11 +22,7 @@
                     <td>{{ $item->kodeInduk->kode_induk . ' - ' . $item->kodeInduk->nama }}</td>
                     <td>{{ $item->kode_akun }}</td>
                     <td>{{ $item->nama }}</td>
-                    @if (number_format($item->saldo_awal) < 0)    
-                        <td>{{ "(".number_format($item->saldo_awal, 2, ',', '.').")" }}</td>
-                    @else
-                        <td>{{ number_format($item->saldo_awal, 2, ',', '.') }}</td>
-                    @endif
+                    <td>{{ number_format($item->saldo_awal, 2, ',', '.') }}</td>
                     <td>{{ $item->tipe }}</td>
                     {{-- <td>Rp. {{number_format($item->saldo_awal, 2, ',', '.') }}</td> --}}
                     <td>
