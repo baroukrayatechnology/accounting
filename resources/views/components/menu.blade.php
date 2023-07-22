@@ -25,7 +25,7 @@
                 {{-- master akuntansi --}}
                 @if (Auth::user()->level != 'Viewer')
 
-                <li class="{{ Request::segment(1) == 'supplier' ? 'active' : '' }}">
+                {{-- <li class="{{ Request::segment(1) == 'supplier' ? 'active' : '' }}">
                     <a href="{{ url('supplier') }}" class="waves-effect waves-dark">
                         <span class="pcoded-micon">
                             <i class="fa-solid fa-people-carry-box"></i>
@@ -41,7 +41,7 @@
                         </span>
                         <span class="pcoded-mtext">Customer</span>
                     </a>
-                </li>
+                </li> --}}
 
                 <li class="pcoded-hasmenu {{ Request::segment(1) == 'master-akuntasi' ? 'active' : '' }} {{ Request::segment(1) == 'master-akuntasi' ? 'pcoded-trigger' : '' }}">
                     <a href="javascript:void(0)" class="waves-effect waves-dark">
