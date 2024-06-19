@@ -43,8 +43,7 @@ class KodeAkunController extends Controller
             $this->param['kode_akun'] = $getKodeAkun->paginate(10);
         } catch (\Illuminate\Database\QueryException $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
         }
 
@@ -62,7 +61,7 @@ class KodeAkunController extends Controller
         $this->param['btnLink'] = route('kode-akun.index');
         $this->param['data'] = KodeInduk::all();
 
-        return view('pages.kode-akun.create',$this->param);
+        return view('pages.kode-akun.create', $this->param);
     }
 
     /**
@@ -75,32 +74,55 @@ class KodeAkunController extends Controller
     {
         $request->validate([
             'induk_kode' => 'required|not_in:0',
-            'kode_akun' => 'required|unique:kode_akun',
             'tipe' => 'required|not_in:0',
             'nama' => 'required',
-        ],[
+            'level' => 'required',
+            'saldo_awal' => 'required',
+        ], [
             'required' => ':attribute harus terisi.',
-            'not_in' => ':attribute harus terisi.'
-        ],[
+            'not_in' => ':attribute harus terisi.',
+        ], [
             'induk_kode' => 'Kode induk',
-            'kode_akun' => 'Kode akun',
             'nama' => 'Nama akun',
+            'level' => 'Level akun',
+            'saldo_awal' => 'Saldo awal',
         ]);
         // return $request;
         try {
-            $kode_akun = $request->kode_akun;
+            $kode_akun = '';
+
+            if ($request->level == 1) {
+                $check_level = $this->getByLevel(strval($request->induk_kode), '1');
+                $kode_akun .= strval($request->induk_kode);
+                $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
+            } else {
+                $check_parent = $this->getByParent($request->parent);
+                $kode_akun .= strval($request->parent);
+                if ($request->level == 2) {
+                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
+                } else {
+                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
+                };
+            };
+
             $addData = new KodeAkun;
             $addData->kode_akun = $kode_akun;
             $addData->induk_kode = $request->induk_kode;
             $addData->tipe = $request->tipe;
-            $addData->nama = str_replace('-',' ',$request->nama);
+            $addData->level = strval($request->level);
+            $addData->nama = str_replace('-', ' ', $request->nama);
             $addData->saldo_awal = $request->saldo_awal;
+
+            if ($request->parent) {
+                $addData->parent = $request->parent;
+            };
+
             $addData->save();
             return redirect()->route('kode-akun.index')->withStatus('Berhasil menambahkan data.');
         } catch (QueryException $e) {
-            return redirect()->back()->withError('Terjadi kesalahan.');
-        } catch (Exception $e){
-            return redirect()->back()->withError('Terjadi kesalahan.');
+            return redirect()->back()->withError('Terjadi kesalahan.' . $e);
+        } catch (Exception $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.' . $e);
         }
     }
 
@@ -113,6 +135,28 @@ class KodeAkunController extends Controller
     public function show($id)
     {
         //
+    }
+
+    public function getByParent($code)
+    {
+        try {
+            return KodeAkun::where('parent', $code)->get();
+        } catch (QueryException $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        } catch (Exception $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        };
+    }
+
+    public function getByLevel($root, $level)
+    {
+        try {
+            return KodeAkun::where('induk_kode', $root)->where('level', $level)->get();
+        } catch (QueryException $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        } catch (Exception $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        };
     }
 
     /**
@@ -129,10 +173,10 @@ class KodeAkunController extends Controller
             $this->param['btnLink'] = route('kode-akun.index');
             $this->param['data'] = KodeAkun::findOrFail($id);
             $this->param['data_induk'] = KodeInduk::all();
-            return view('pages.kode-akun.edit',$this->param);
+            return view('pages.kode-akun.edit', $this->param);
         } catch (QueryException $e) {
             return redirect()->back()->withError('Terjadi kesalahan.');
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return redirect()->back()->withError('Terjadi kesalahan.');
         }
     }
@@ -147,36 +191,59 @@ class KodeAkunController extends Controller
     public function update(Request $request, $id)
     {
         $kode_akun = KodeAkun::find($id);
-        $isUniqueKodeAkun = $kode_akun->kode_akun == $request->kode_akun ? '' : '|unique:kode_akun';
+        // $isUniqueKodeAkun = $kode_akun->kode_akun == $request->kode_akun ? '' : '|unique:kode_akun';
         $isUniqueNamaAkun = $kode_akun->nama == $request->nama ? '' : '|unique:kode_akun';
         $request->validate([
             'induk_kode' => 'required|not_in:0',
-            'kode_akun' => 'required'.$isUniqueKodeAkun,
-            'nama' => 'required'.$isUniqueNamaAkun,
+            // 'kode_akun' => 'required' . $isUniqueKodeAkun,
+            'nama' => 'required' . $isUniqueNamaAkun,
             'tipe' => 'required|not_in:0',
-        ],[
+            'level' => 'required',
+        ], [
             'unique' => ':attribute sudah tersedia.',
             'required' => ':attribute harus terisi.',
             'not_in' => ':attribute harus terisi.'
-        ],[
+        ], [
             'induk_kode' => 'Kode induk',
             'kode_akun' => 'Kode akun',
             'nama' => 'Nama akun',
+            'level' => 'Level akun',
         ]);
         try {
-            $kode_akun = $request->kode_akun;
+            $kode_akun = '';
+
+            if ($request->level == 1) {
+                $check_level = $this->getByLevel(strval($request->induk_kode), '1');
+                $kode_akun .= strval($request->induk_kode);
+                $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
+            } else {
+                $check_parent = $this->getByParent($request->parent);
+                $kode_akun .= strval($request->parent);
+                if ($request->level == 2) {
+                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
+                } else {
+                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
+                };
+            };
+
             $updateData = KodeAkun::findOrFail($id);
             $updateData->kode_akun = $kode_akun;
             $updateData->induk_kode = $request->induk_kode;
             $updateData->tipe = $request->tipe;
-            $updateData->nama = str_replace('-',' ',$request->nama);
+            $updateData->level = strval($request->level);
+            $updateData->nama = str_replace('-', ' ', $request->nama);
             $updateData->saldo_awal = $request->saldo_awal;
+
+            if ($request->parent) {
+                $updateData->parent = $request->parent;
+            };
+
             $updateData->save();
             return redirect()->route('kode-akun.index')->withStatus('Berhasil menambahkan data.');
         } catch (QueryException $e) {
             return $e;
             return redirect()->back()->withError('Terjadi kesalahan.');
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return $e;
             return redirect()->back()->withError('Terjadi kesalahan.');
         }
@@ -198,7 +265,6 @@ class KodeAkunController extends Controller
             }
             $trashKodeAkun->delete();
             return redirect()->route('kode-akun.index')->withStatus('Berhasil memindahkan ke sampah');
-
         } catch (\Exception $e) {
             return $e;
             return redirect()->back()->withError('Terjadi kesalahan.');
@@ -214,8 +280,8 @@ class KodeAkunController extends Controller
         try {
             $keyword = $request->get('keyword');
             $getKodeAkun = KodeAkun::with('kodeInduk', 'user')->onlyTrashed();
-                // ->select('kode_akun.kode_akun as kode_akun','kode_akun.nama','kode_akun.saldo_awal','kode_akun.deleted_by','users.id','users.name')
-                // ->join('users','kode_akun.deleted_by','users.id')->onlyTrashed();
+            // ->select('kode_akun.kode_akun as kode_akun','kode_akun.nama','kode_akun.saldo_awal','kode_akun.deleted_by','users.id','users.name')
+            // ->join('users','kode_akun.deleted_by','users.id')->onlyTrashed();
 
 
             if ($keyword) {
@@ -223,11 +289,10 @@ class KodeAkunController extends Controller
             }
 
             $this->param['kode_akun'] = $getKodeAkun->paginate(10);
-            return view('pages.kode-akun.listTrash',$this->param);
+            return view('pages.kode-akun.listTrash', $this->param);
         } catch (\Illuminate\Database\QueryException $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
         }
 
@@ -242,19 +307,14 @@ class KodeAkunController extends Controller
                 $kodeAkun->deleted_by = null;
                 $kodeAkun->restore();
                 return redirect()->route('kodeAkun.trash')->withStatus('Data berhasil di kembalikan.');
-            }
-            else
-            {
+            } else {
                 return redirect()->route('kodeAkun.trash')->withError('Data tidak ada dalam sampah.');
             }
-
         } catch (\Illuminate\Database\QueryException $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
         }
-
     }
     public function hapusPermanen($id)
     {
@@ -263,11 +323,9 @@ class KodeAkunController extends Controller
             $deleteKodeAkun = KodeAkun::onlyTrashed()->find($id);
             $deleteKodeAkun->forceDelete();
             return redirect()->route('kodeAkun.trash')->withStatus('Data berhasil dihapus permanen.');
-
         } catch (\Illuminate\Database\QueryException $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             return back()->withError('Terjadi Kesalahan : ' . $e->getMessage());
         }
     }
