@@ -41,18 +41,12 @@
         </div>
     </div>
 
-    {{-- <div class="form-group row">
+    <div id="code-preview-group" class="d-none form-group row">
         <label class="col-sm-2 col-form-label">Kode Akun</label>
         <div class="col-sm-10">
-            <input type="text" name="kode_akun" class="form-control @error('kode_akun') is-invalid @enderror"
-                placeholder="Kode Akun" value="{{ old('kode_akun') }}">
-            @error('kode_akun')
-                <div class="invalid-feedback">
-                    {{ $message }}
-                </div>
-            @enderror
+            <input type="text" id="code-preview" class="form-control" placeholder="Kode Akun" readonly>
         </div>
-    </div> --}}
+    </div>
 
     <div class="form-group row">
         <label class="col-sm-2 col-form-label">Nama Kode</label>
@@ -67,11 +61,27 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div id="is_transaction-group" class="form-group row">
+        <label class="col-sm-2 col-form-label">Jenis Akun</label>
+        <div class="col-sm-10">
+            <select name="is_transaction" id="is_transaction"
+                class="form-control @error('is_transaction') is-invalid @enderror">
+                <option value="1" {{ old('is_transaction') == 1 ? ' selected' : '' }}>Transaksi</option>
+                <option value="0" {{ old('is_transaction') == 0 ? ' selected' : '' }}>Non Transaksi</option>
+            </select>
+            @error('is_transaction')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+            @enderror
+        </div>
+    </div>
+
+    <div id="saldo-group" class="@if (!$errors->has('saldo_awal') && old('is_transaction') == 0) d-none @endif form-group row">
         <label class="col-sm-2 col-form-label">Saldo Awal</label>
         <div class="col-sm-10">
             <input type="text" name="saldo_awal" class="form-control @error('saldo_awal') is-invalid @enderror"
-                placeholder="Saldo Awal" value="{{ old('saldo_waal') }}">
+                placeholder="Saldo Awal" value="{{ old('saldo_awal') }}">
             @error('saldo_awal')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -80,11 +90,11 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div id="tipe-group" class="@if (!$errors->has('tipe') && old('is_transaction') == 0) d-none @endif form-group row">
         <label class="col-sm-2 col-form-label">Tipe</label>
         <div class="col-sm-10">
             <select name="tipe" id="tipe" class="form-control @error('tipe') is-invalid @enderror">
-                <option value="0">Pilih tipe</option>
+                <option value="0" selected hidden disabled>Pilih tipe</option>
                 <option value="Debit" {{ old('tipe') == 'Administrator' ? ' selected' : '' }}>Debit</option>
                 <option value="Kredit" {{ old('tipe') == 'Accounting' ? ' selected' : '' }}>Kredit</option>
             </select>
@@ -109,16 +119,19 @@
             });
 
             $('#level').change(function() {
+                let root = $('#induk_kode').val();
+                $('#code-preview').val('');
+                $('#code-preview-group').addClass('d-none');
+
                 if ($('#level').val() && $('#level').val() > 1) {
-                    let root = $('#induk_kode').val();
-                    let level = $('#level').val() - 1;
+                    let parent_level = $('#level').val() - 1;
 
                     $('#parent-group').removeClass('d-none');
-                    $('#parent-selected').text(level);
+                    $('#parent-selected').text(parent_level);
 
                     let parent_option = '';
 
-                    const url = `{{ url('/master-akuntasi/kode-akun-level/${root}/${level}') }}`;
+                    const url = `{{ url('/master-akuntasi/kode-akun-level/${root}/${parent_level}') }}`;
                     $.ajax({
                         url: url,
                         type: 'get',
@@ -127,12 +140,34 @@
                                 parent_option +=
                                     `<option value="${acc.kode_akun}">${acc.nama}</option>`;
                             });
+
                             $('#parent-input-base').html(`
                                 <select name="parent" id="parent" class="form-control">
                                     <option selected hidden disabled>Pilih Akun</option>
                                     ${parent_option}
                                 </select>
                             `);
+
+                            $('#parent').change(function() {
+                                let parent = $('#parent').val();
+                                let level = $('#level').val();
+
+                                if (parent) {
+                                    const url =
+                                        `{{ url('/master-akuntasi/preview-kode/${level}/${root}/${parent}') }}`;
+
+                                    $('#code-preview-group').removeClass('d-none');
+                                    $.ajax({
+                                        url: url,
+                                        type: 'get',
+                                        success: function(data) {
+                                            $('#code-preview').val(data);
+                                        }
+                                    });
+                                } else {
+                                    $('#code-preview-group').addClass('d-none');
+                                };
+                            });
                         },
                         error: function(xhr, status, error) {
                             console.error("An error occurred while fetching data: ", error);
@@ -140,8 +175,30 @@
                     });
 
                 } else {
+                    const url = `{{ url('/master-akuntasi/preview-kode/1/${root}/null') }}`;
+
                     $('#parent-group').addClass('d-none');
-                }
+                    $('#code-preview-group').removeClass('d-none');
+                    $.ajax({
+                        url: url,
+                        type: 'get',
+                        success: function(data) {
+                            $('#code-preview').val(data);
+                        }
+                    });
+                };
+            });
+
+            $('#is_transaction').change(function() {
+                if ($('#is_transaction').val() == 1) {
+                    $('#saldo-group').removeClass('d-none')
+                    $('#tipe-group').removeClass('d-none')
+                } else {
+                    $('#saldo-group').addClass('d-none')
+                    $('#tipe-group').addClass('d-none')
+                    $('#saldo').val('');
+                    $('#tipe').val('');
+                };
             });
         });
     </script>

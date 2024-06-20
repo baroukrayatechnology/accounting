@@ -70,14 +70,36 @@ class KodeAkunController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
+    public function generateCode($level, $induk_kode, $parent)
+    {
+        $kode_akun = '';
+
+        if ($level == 1) {
+            $check_level = $this->getByLevel(strval($induk_kode), '1');
+            $kode_akun .= strval($induk_kode);
+            return $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
+        } else {
+            $check_parent = $this->getByParent($parent);
+            $kode_akun .= strval($parent);
+            if ($level == 2) {
+                return $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
+            } else {
+                return $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
+            };
+        };
+    }
+
     public function store(Request $request)
     {
+        $extends_required = $request->is_transaction == 1 ? 'required' : '';
         $request->validate([
             'induk_kode' => 'required|not_in:0',
-            'tipe' => 'required|not_in:0',
             'nama' => 'required',
             'level' => 'required',
-            'saldo_awal' => 'required',
+            'is_transaction' => 'required',
+            'tipe' => $extends_required,
+            'saldo_awal' => $extends_required
         ], [
             'required' => ':attribute harus terisi.',
             'not_in' => ':attribute harus terisi.',
@@ -85,25 +107,14 @@ class KodeAkunController extends Controller
             'induk_kode' => 'Kode induk',
             'nama' => 'Nama akun',
             'level' => 'Level akun',
-            'saldo_awal' => 'Saldo awal',
+            'is_transaction' => 'Jenis Akun',
+            'tipe' => 'Tipe Akun',
+            'saldo_awal' => 'Saldo Awal'
         ]);
+
         // return $request;
         try {
-            $kode_akun = '';
-
-            if ($request->level == 1) {
-                $check_level = $this->getByLevel(strval($request->induk_kode), '1');
-                $kode_akun .= strval($request->induk_kode);
-                $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
-            } else {
-                $check_parent = $this->getByParent($request->parent);
-                $kode_akun .= strval($request->parent);
-                if ($request->level == 2) {
-                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
-                } else {
-                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
-                };
-            };
+            $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
 
             $addData = new KodeAkun;
             $addData->kode_akun = $kode_akun;
@@ -111,6 +122,7 @@ class KodeAkunController extends Controller
             $addData->tipe = $request->tipe;
             $addData->level = strval($request->level);
             $addData->nama = str_replace('-', ' ', $request->nama);
+            $addData->is_transaction = $request->is_transaction;
             $addData->saldo_awal = $request->saldo_awal;
 
             if ($request->parent) {
@@ -193,12 +205,16 @@ class KodeAkunController extends Controller
         $kode_akun = KodeAkun::find($id);
         // $isUniqueKodeAkun = $kode_akun->kode_akun == $request->kode_akun ? '' : '|unique:kode_akun';
         $isUniqueNamaAkun = $kode_akun->nama == $request->nama ? '' : '|unique:kode_akun';
+        $extends_required = $request->is_transaction == 1 ? 'required' : '';
+
         $request->validate([
             'induk_kode' => 'required|not_in:0',
             // 'kode_akun' => 'required' . $isUniqueKodeAkun,
             'nama' => 'required' . $isUniqueNamaAkun,
-            'tipe' => 'required|not_in:0',
             'level' => 'required',
+            'is_transaction' => 'required',
+            'tipe' => $extends_required,
+            'saldo_awal' => $extends_required
         ], [
             'unique' => ':attribute sudah tersedia.',
             'required' => ':attribute harus terisi.',
@@ -208,23 +224,12 @@ class KodeAkunController extends Controller
             'kode_akun' => 'Kode akun',
             'nama' => 'Nama akun',
             'level' => 'Level akun',
+            'is_transaction' => 'Jenis Akun',
+            'tipe' => 'Tipe Akun',
+            'saldo_awal' => 'Saldo Awal'
         ]);
         try {
-            $kode_akun = '';
-
-            if ($request->level == 1) {
-                $check_level = $this->getByLevel(strval($request->induk_kode), '1');
-                $kode_akun .= strval($request->induk_kode);
-                $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
-            } else {
-                $check_parent = $this->getByParent($request->parent);
-                $kode_akun .= strval($request->parent);
-                if ($request->level == 2) {
-                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
-                } else {
-                    $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
-                };
-            };
+            $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
 
             $updateData = KodeAkun::findOrFail($id);
             $updateData->kode_akun = $kode_akun;
@@ -232,6 +237,7 @@ class KodeAkunController extends Controller
             $updateData->tipe = $request->tipe;
             $updateData->level = strval($request->level);
             $updateData->nama = str_replace('-', ' ', $request->nama);
+            $updateData->is_transaction = $request->is_transaction;
             $updateData->saldo_awal = $request->saldo_awal;
 
             if ($request->parent) {
