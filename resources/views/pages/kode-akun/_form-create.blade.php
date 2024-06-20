@@ -4,7 +4,7 @@
         <label class="col-sm-2 col-form-label">Kode Induk</label>
         <div class="col-sm-10">
             <select name="induk_kode" id="induk_kode" class="form-control @error('induk_kode') is-invalid @enderror">
-                <option value="0">Pilih Kode Induk</option>
+                <option selected hidden disabled>Pilih Kode Induk</option>
                 @foreach ($data as $item)
                     <option value="{{ $item->kode_induk }}">{{ $item->kode_induk . ' -- ' . $item->nama }}</option>
                 @endforeach
@@ -32,6 +32,18 @@
                     {{ $message }}
                 </div>
             @enderror
+        </div>
+    </div>
+
+    <div id="filter-parent-1-group" class="form-group row d-none">
+        <label class="col-sm-2 col-form-label">Pilih Akun Level 1</label>
+        <div class="col-sm-10" id="parent-filter-1-input-base">
+        </div>
+    </div>
+
+    <div id="filter-parent-2-group" class="form-group row d-none">
+        <label class="col-sm-2 col-form-label">Pilih Akun Level 2</label>
+        <div class="col-sm-10" id="parent-filter-2-input-base">
         </div>
     </div>
 
@@ -112,7 +124,88 @@
 @push('custom-scripts')
     <script>
         $(document).ready(function() {
+            function applyParent(parent_level, root, related_parent) {
+                $('#parent-group').removeClass('d-none');
+                $('#parent-selected').text(parent_level);
+
+                let parent_option = '';
+                let url = '';
+
+                if (related_parent === null) {
+                    url =
+                        `{{ url('/master-akuntasi/kode-akun-level/${root}/${parent_level}') }}`;
+                } else {
+                    url =
+                        `{{ url('/master-akuntasi/get-child/${related_parent}') }}`;
+                };
+
+                $.ajax({
+                    url: url,
+                    type: 'get',
+                    success: function(data) {
+                        data.forEach(acc => {
+                            parent_option +=
+                                `<option value="${acc.kode_akun}">${acc.nama}</option>`;
+                        });
+
+                        $('#parent-input-base').html(`
+                                <select name="parent" id="parent" class="form-control">
+                                    <option selected hidden disabled>Pilih Akun</option>
+                                    ${parent_option}
+                                </select>
+                            `);
+
+                        $('#parent').change(function() {
+                            let parent = $('#parent').val();
+                            let level = $('#level').val();
+
+                            console.log(parent);
+
+                            if (parent) {
+                                const code_url =
+                                    `{{ url('/master-akuntasi/preview-kode/${level}/${root}/${parent}') }}`;
+
+                                $('#code-preview-group').removeClass('d-none');
+                                $.ajax({
+                                    url: code_url,
+                                    type: 'get',
+                                    success: function(data) {
+                                        $('#code-preview').val(
+                                            data);
+                                    }
+                                });
+                            } else {
+                                $('#code-preview-group').addClass('d-none');
+                            };
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("An error occurred while fetching data: ", error);
+                    }
+                });
+            };
+
+            function resetInput(type) {
+                if (type == 0) {
+                    $('#filter-parent-1-group').addClass('d-none');
+                    $('#parent-filter-1').val('');
+                };
+
+                if (type == 0 || type == 1) {
+                    $('#filter-parent-2-group').addClass('d-none');
+                    $('#parent-filter-2').val('');
+                };
+
+                if (type == 0 || type == 1 || type == 2) {
+                    $('#parent').val('');
+                    $('#code-preview').val('');
+                    $('#code-preview-group').addClass('d-none');
+                    $('#parent-group').addClass('d-none');
+                };
+            };
+
             $('#induk_kode').change(function() {
+                resetInput(0);
                 if ($('#induk_kode').val()) {
                     $('#level-group').removeClass('d-none');
                 };
@@ -120,60 +213,94 @@
 
             $('#level').change(function() {
                 let root = $('#induk_kode').val();
-                $('#code-preview').val('');
-                $('#code-preview-group').addClass('d-none');
+                resetInput(0);
 
                 if ($('#level').val() && $('#level').val() > 1) {
                     let parent_level = $('#level').val() - 1;
+                    let parent_count = parent_level - 1;
+                    let parent_appear = parent_level - 1;
 
-                    $('#parent-group').removeClass('d-none');
-                    $('#parent-selected').text(parent_level);
+                    if (parent_count > 0) {
+                        $('#filter-parent-1-group').removeClass('d-none');
 
-                    let parent_option = '';
+                        const url = `{{ url('/master-akuntasi/kode-akun-level/${root}/1') }}`;
+                        $.ajax({
+                            url: url,
+                            type: 'get',
+                            success: function(data) {
+                                let parent_option = '';
 
-                    const url = `{{ url('/master-akuntasi/kode-akun-level/${root}/${parent_level}') }}`;
-                    $.ajax({
-                        url: url,
-                        type: 'get',
-                        success: function(data) {
-                            data.forEach(acc => {
-                                parent_option +=
-                                    `<option value="${acc.kode_akun}">${acc.nama}</option>`;
-                            });
+                                data.forEach(acc => {
+                                    parent_option +=
+                                        `<option value="${acc.kode_akun}">${acc.nama}</option>`;
+                                });
 
-                            $('#parent-input-base').html(`
-                                <select name="parent" id="parent" class="form-control">
+                                $('#parent-filter-1-input-base').html(`
+                                <select id="parent-filter-1" class="form-control">
                                     <option selected hidden disabled>Pilih Akun</option>
                                     ${parent_option}
                                 </select>
                             `);
+                                $('#parent-filter-1').change(function() {
+                                    parent_appear++;
+                                    resetInput(1);
+                                    if (parent_appear == 2) {
+                                        parent_appear--;
+                                        applyParent(parent_level, root, $(
+                                            '#parent-filter-1').val());
+                                    } else {
+                                        $('#filter-parent-2-group').removeClass(
+                                            'd-none');
+                                        let parent_selected = $('#parent-filter-1')
+                                            .val();
+                                        const get_child =
+                                            `{{ url('/master-akuntasi/get-child/${parent_selected}') }}`;
+                                        $.ajax({
+                                            url: get_child,
+                                            type: 'get',
+                                            success: function(data) {
+                                                let child_option = '';
 
-                            $('#parent').change(function() {
-                                let parent = $('#parent').val();
-                                let level = $('#level').val();
+                                                data.forEach(acc => {
+                                                    child_option +=
+                                                        `<option value="${acc.kode_akun}">${acc.nama}</option>`;
+                                                });
 
-                                if (parent) {
-                                    const url =
-                                        `{{ url('/master-akuntasi/preview-kode/${level}/${root}/${parent}') }}`;
-
-                                    $('#code-preview-group').removeClass('d-none');
-                                    $.ajax({
-                                        url: url,
-                                        type: 'get',
-                                        success: function(data) {
-                                            $('#code-preview').val(data);
-                                        }
-                                    });
-                                } else {
-                                    $('#code-preview-group').addClass('d-none');
-                                };
-                            });
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("An error occurred while fetching data: ", error);
-                        }
-                    });
-
+                                                $('#parent-filter-2-input-base')
+                                                    .html(`
+                                                    <select id="parent-filter-2" class="form-control">
+                                                        <option selected hidden disabled>Pilih Akun</option>
+                                                        ${child_option}
+                                                    </select>
+                                                `);
+                                                $('#parent-filter-2')
+                                                    .change(
+                                                        function() {
+                                                            resetInput(2);
+                                                            applyParent(
+                                                                parent_level,
+                                                                root, $(
+                                                                    '#parent-filter-2'
+                                                                ).val());
+                                                        });
+                                            },
+                                            error: function(xhr, status,
+                                                error) {
+                                                console.error(
+                                                    "An error occurred while fetching data: ",
+                                                    error);
+                                            }
+                                        });
+                                    };
+                                });
+                            },
+                            error: function(xhr, status, error) {
+                                console.error("An error occurred while fetching data: ", error);
+                            }
+                        });
+                    } else {
+                        applyParent(parent_level, root, null);
+                    }
                 } else {
                     const url = `{{ url('/master-akuntasi/preview-kode/1/${root}/null') }}`;
 

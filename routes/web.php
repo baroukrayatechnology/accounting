@@ -80,6 +80,8 @@ Route::middleware(['auth'])->group(function () {
         // Kode Akun
         Route::resource('/kode-akun', KodeAkunController::class);
         Route::get('/kode-akun-level/{root}/{level}', [KodeAkunController::class, 'getByLevel']);
+        Route::get('/id-kode-akun/{id}', [KodeAkunController::class, 'getById']);
+        Route::get('/get-child/{code}', [KodeAkunController::class, 'getByParent']);
         Route::get('/preview-kode/{level}/{root}/{parent}', [KodeAkunController::class, 'generateCode']);
         // KunciTransaksi
         Route::resource('/kunci-transaksi', KunciTransaksiController::class);

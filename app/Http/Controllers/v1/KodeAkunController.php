@@ -78,14 +78,14 @@ class KodeAkunController extends Controller
         if ($level == 1) {
             $check_level = $this->getByLevel(strval($induk_kode), '1');
             $kode_akun .= strval($induk_kode);
-            return $kode_akun .= isset($check_level[0]) ? strval(count($check_level) + 1) : '1';
+            return $kode_akun .= isset($check_level[0]) ? strval((int)substr($check_level[count($check_level) - 1]->kode_akun, -1) + 1) : '1';
         } else {
             $check_parent = $this->getByParent($parent);
             $kode_akun .= strval($parent);
             if ($level == 2) {
-                return $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 2, "0", STR_PAD_LEFT) : '01';
+                return $kode_akun .= isset($check_parent[0]) ? str_pad(strval((int)substr($check_parent[count($check_parent) - 1]->kode_akun, -1) + 1), 2, "0", STR_PAD_LEFT) : '01';
             } else {
-                return $kode_akun .= isset($check_parent[0]) ? str_pad(count($check_parent) + 1, 3, "0", STR_PAD_LEFT) : '001';
+                return $kode_akun .= isset($check_parent[0]) ? str_pad(strval((int)substr($check_parent[count($check_parent) - 1]->kode_akun, -1) + 1), 3, "0", STR_PAD_LEFT) : '001';
             };
         };
     }
@@ -153,6 +153,17 @@ class KodeAkunController extends Controller
     {
         try {
             return KodeAkun::where('parent', $code)->get();
+        } catch (QueryException $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        } catch (Exception $e) {
+            return redirect()->back()->withError('Terjadi kesalahan.');
+        };
+    }
+
+    public function getById($id)
+    {
+        try {
+            return KodeAkun::where('kode_akun', $id)->first();
         } catch (QueryException $e) {
             return redirect()->back()->withError('Terjadi kesalahan.');
         } catch (Exception $e) {
@@ -229,10 +240,10 @@ class KodeAkunController extends Controller
             'saldo_awal' => 'Saldo Awal'
         ]);
         try {
-            $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
+            // $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
 
             $updateData = KodeAkun::findOrFail($id);
-            $updateData->kode_akun = $kode_akun;
+            // $updateData->kode_akun = $kode_akun;
             $updateData->induk_kode = $request->induk_kode;
             $updateData->tipe = $request->tipe;
             $updateData->level = strval($request->level);
