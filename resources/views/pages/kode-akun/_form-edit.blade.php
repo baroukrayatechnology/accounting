@@ -166,7 +166,7 @@
                     success: function(data) {
                         data.forEach(acc => {
                             parent_option +=
-                                `<option value="${acc.kode_akun}">${acc.nama}</option>`;
+                                `<option value="${acc.kode_akun}" ${acc.kode_akun == `{{ old('parent', $data->parent) }}` ? 'selected': ''}>${acc.nama}</option>`;
                         });
 
                         $('#parent-input-base').html(`
@@ -328,16 +328,19 @@
                         applyParent(parent_level, root, null);
                     }
                 } else {
-                    const url = `{{ url('/master-akuntasi/preview-kode/1/${root}/null') }}`;
+                    $('#induk_kode').change(function() {
+                        let root = $('#induk_kode').val();
+                        const url = `{{ url('/master-akuntasi/preview-kode/1/${root}/null') }}`;
 
-                    $('#parent-group').addClass('d-none');
-                    $('#code-preview-group').removeClass('d-none');
-                    $.ajax({
-                        url: url,
-                        type: 'get',
-                        success: function(data) {
-                            $('#code-preview').val(data);
-                        }
+                        $('#parent-group').addClass('d-none');
+                        $('#code-preview-group').removeClass('d-none');
+                        $.ajax({
+                            url: url,
+                            type: 'get',
+                            success: function(data) {
+                                $('#code-preview').val(data);
+                            }
+                        });
                     });
                 };
             };
@@ -355,6 +358,11 @@
             };
             $('#parent').val(`{{ old('parent', $data->parent) }}`);
             $('#code-preview').val(`{{ old('kode_akun', $data->kode_akun) }}`);
+
+            if ($('#level').val() - 2 === 0) {
+                applyParent(1, root, null);
+            };
+
             for (let i = $('#level').val() - 2; i > 0; i--) {
                 $(`#filter-parent-${i}-group`).removeClass('d-none');
 

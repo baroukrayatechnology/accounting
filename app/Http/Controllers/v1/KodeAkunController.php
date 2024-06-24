@@ -240,10 +240,22 @@ class KodeAkunController extends Controller
             'saldo_awal' => 'Saldo Awal'
         ]);
         try {
-            // $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
-
             $updateData = KodeAkun::findOrFail($id);
-            // $updateData->kode_akun = $kode_akun;
+
+            $kode_akun = '';
+
+            if ($request->parent) {
+                if ($request->parent != $updateData->parent) {
+                    $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
+                };
+                $updateData->parent = $request->parent;
+            } else {
+                if ($request->induk_kode != $updateData->induk_kode) {
+                    $kode_akun = $this->generateCode($request->level, $request->induk_kode, $request->parent);
+                };
+            };
+
+            $updateData->kode_akun = $kode_akun;
             $updateData->induk_kode = $request->induk_kode;
             $updateData->tipe = $request->tipe;
             $updateData->level = strval($request->level);
@@ -251,12 +263,8 @@ class KodeAkunController extends Controller
             $updateData->is_transaction = $request->is_transaction;
             $updateData->saldo_awal = $request->saldo_awal;
 
-            if ($request->parent) {
-                $updateData->parent = $request->parent;
-            };
-
             $updateData->save();
-            return redirect()->route('kode-akun.index')->withStatus('Berhasil menambahkan data.');
+            return redirect()->route('kode-akun.index')->withStatus('Berhasil memperbarui data.');
         } catch (QueryException $e) {
             return $e;
             return redirect()->back()->withError('Terjadi kesalahan.');
